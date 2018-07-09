@@ -1,7 +1,9 @@
 #!/usr/bin/python
 
-import topolink
 import sys
+sys.path.append('../src/')
+
+import topolink
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -11,25 +13,19 @@ import histogram
 #  Main code
 #
 
-plot_dir = "./plots"
+plot_dir = "./"
 
-#xml_file = sys.argv[1]
+protein_name='SalbIII'
+xml_file = 'salbiii_hitsDetail.dat'
+topolink_log = 'salbiii_topolink.log'
+domain = [2,134]
 
-#protein_name='SalbIII'
-#xml_file = 'salbiii_hitsDetail.dat'
-#topolink_log = 'salbiii_topolink.log'
-#domain = [2,134]
-
-protein_name='ALB'
-xml_file = 'alb_hitsDetail.dat'
-topolink_log = 'alb_topolink.log'
-domain = [1,201] ; protein_name=protein_name+'-D1'
+#protein_name='ALB'
+#xml_file = 'alb_hitsDetail.dat'
+#topolink_log = 'alb_topolink.log'
+#domain = [1,201] ; protein_name=protein_name+'-D1'
 #domain = [202,390] ; protein_name=protein_name+'-D2' 
 #domain = [391,584] ; protein_name=protein_name+'-D3' 
-
-# Number of residues in domain
-
-n = domain[1]-domain[0]
 
 # Read xml file from SIM-XL
 
@@ -38,71 +34,46 @@ nlinks, links = topolink.readxml(xml_file,domain)
 # Read topolink input to get the length of the linkers
 
 for link in links :
-  link.dmax = topolink.getdmax("linktypes.inp",link)
+  link.dmax = topolink.getdmax("topolink.inp",link)
 
-# Read topolink log file to define link consistency
+# Read topolink log file to get the euclidean and topological distances
 
 for link in links :
   link.deuc, link.dtop = topolink.readlog(topolink_log,link)
 
-# Score labels:
+# Set consistency with 0. tolerance:
 
-label = [ 'Average Score1', 'Average Score2', 'Number of species', \
-          'Maximum Score1', 'Maximum Score2', 'Number of scans' ]
-nscores = len(label)
-
-#
-# Set y array containing sim-xl scores for each link
-#
-
-y = [ np.zeros(nlinks) for i in range(0,nscores) ]
-ilink=-1
 for link in links :
-  ilink=ilink+1
-  y[0][ilink] = link.avgscore1   #Average of score1
-  y[1][ilink] = link.avgscore2   #Average of score2
-  y[2][ilink] = link.nspecies    #Number of spectra
-  y[3][ilink] = link.maxscore1   #Maximum of score1
-  y[4][ilink] = link.maxscore2   #Maximum of score2
-  y[5][ilink] = link.nscans      #Number of scans
+  link.consistency = topolink.setconsistency(link,0.)
 
-# Set the range of tols to plot tolerance dependence of correlations
+# Plot one of the scores as a function of consistency 
 
-tols = []
-tol = -3.
-while tol <= 20. :
-  tols.append(tol)
-  tol = tol + 0.5
+#x, y = topolink.setplot(links,x='Consistency',y='Average Score1',tol=5.)
 
-# Compute point-biserial correlations as a function of tolerance
+# Plot the point-biserial correlation as function of the tolerance, for one score
+# tol=[-3.,15.,0.5] is the minimum, maximum and step of the tolerance relative do dmax.
 
-x = [ np.zeros(nlinks,dtype=bool) for i in range(0,len(tols)) ]
-pbs = [ np.zeros(len(tols)) for i in range(0,nscores) ] 
+#x, pbs = topolink.pbs_vs_tol(links,score='Consistency',tol=[-3., 20., 0.5])
 
-itol=-1
-for tol in tols :
-  itol=itol+1
-  ilink=-1
-  for link in links :
-    ilink=ilink+1
-    if link.dtop > 0. and link.dtop <= link.dmax + tol :
-      link.consistency = True
-    else :
-      link.consistency = False
-    x[itol][ilink] = link.consistency
+#plt.plot(x,pbs)
+#plt.show()
+#sys.exit()
 
-  for iscore in range(0,nscores) :
-    pbs[iscore][itol] = topolink.point_biserial(x[itol],y[iscore])
+# indicators available: 
 
-# plot result
+scores = [ 'Average Score1', 'Average Score2', 'Number of Species', \
+           'Maximum Score1', 'Maximum Score2', 'Number of Scans' ]
 
-for iscore in range(0,nscores) :
-  iplot=iscore+1
+iplot = 0
+for score in scores :
+  iplot=iplot+1
+  x, pbs = topolink.pbs_vs_tol(links,score=score,tol=[-3., 20., 0.5]) 
   plt.subplot(3,2,iplot)
-  plt.plot(tols,pbs[iscore],color='black')
-  plt.title(label[iscore],size=12)
+  plt.plot(x,pbs,color='black')
+  plt.title(score,size=12)
   plt.xlabel('L_{max} deviation',size=12)
   plt.ylabel('correlation',size=12)
+
 
 plt.subplots_adjust(left=0.14, 
                     bottom=0.10, 
@@ -113,6 +84,10 @@ plt.subplots_adjust(left=0.14,
 plt.gcf().set_size_inches(6,8)
 plt.savefig(plot_dir+'/'+protein_name+'_pbs_correlations.pdf')
 plt.close()
+
+sys.exit()
+
+#voltar
 
 #
 # Plot the actual data from which the PBS correlations are computed
@@ -231,8 +206,13 @@ if test :
 # Search best set of scores
 #
 
+
 else :
    
+  # Number of residues in domain
+
+  n = domain[1]-domain[0]
+
   # We want a set of about 2N/10 constraints, where N is the number of
   # residues of the protein
   

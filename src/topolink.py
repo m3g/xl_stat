@@ -102,6 +102,7 @@ def readlog(logfile_name,link) :
         logfile.close()
         return deuc, dtop
   logfile.close()
+  print " Warning: Could not find LINK data in TopoLink log for link: "+link.name
   return -1., -1.
 
 # Function that reads the linker length from a topolink input file with linktype
@@ -124,7 +125,9 @@ def getdmax(linktype_file,link) :
   linktype_file.close()
   return -1.
 
+#
 # Print link in the topolink format
+#
 
 def write(link) :
   data = link.name.split("-")
@@ -133,8 +136,21 @@ def write(link) :
   res1_index = int(data[0][1:])
   res2_index = int(data[1][1:])
   print '{} {:3} {} {:3} {} {:3.2f} {:3.2f}'.format(res1_name,res1_index,res2_name,res2_index,link.consistency,link.dtop,link.dmax)
-  
-  
+
+#
+# Set consistency, given a tolerance
+#
+
+def setconsistency(link,tol=None) :
+
+  if tol == None : tol = 0.
+  if link.dtop >= 0. and link.dtop <= link.dmax + tol :
+    consistency = True
+  else :
+    consistency = False
+
+  return consistency
+
 # 
 # Compute point-biserial correlation (x assumes 0 or 1 values, y is continuous)
 # x is boolean (True or False for each group)
@@ -242,4 +258,153 @@ def readxml(data_file_name,domain) :
     link.set_scores()
 
   return nlinks, links
+
+#
+# Function that returns data to be ploted
+#
+
+def setplot(links,x,y,\
+            tol=None) :
+
+  import numpy as np
+
+  if tol == None : tol = 0.
+
+  data_types = ['Consistency',\
+                'Average Score1',\
+                'Average Score2',\
+                'Maximum Score1',\
+                'Maximum Score2',\
+                'Sum of Score1',\
+                'Sum of Score2',\
+                'Number of Scans',\
+                'Number of Species' ]
+
+  if not x in data_types : 
+    print ' ERROR: x must be one of the following data types: '
+    for type in data_types :
+      print type
+
+  if not y in data_types : 
+    print ' ERROR: x must be one of the following data types: '
+    for type in data_types :
+      print type
+
+  # Set consistency according to given tol
+
+  nlinks = len(links) 
+  consistency = np.zeros(nlinks,dtype=bool)
+  for link in links : 
+    consistency = setconsistency(link,tol)
+
+  # Set xplot and yplot vectors that will be returned
+
+  xplot = np.zeros(nlinks)
+  yplot = np.zeros(nlinks)
+
+  i=-1
+  for link in links : 
+    i=i+1
+    if x == 'Consistency' : xplot[i] = consistency
+    if x == 'Average Score1' : xplot[i] = link.avgscore1
+    if x == 'Average Score2' : xplot[i] = link.avgscore2 
+    if x == 'Maximum Score1' : xplot[i] = link.maxscore1 
+    if x == 'Maximum Score2' : xplot[i] = link.maxscore2 
+    if x == 'Sum of Score1' : xplot[i] = link.sumscore1 
+    if x == 'Sum of Score2' : xplot[i] = link.sumscore2 
+    if x == 'Number of Scans' : xplot[i] = link.nscans 
+    if x == 'Number of Species' : xplot[i] = link.nspecies 
+    
+    if y == 'Consistency' : yplot[i] = consistency
+    if y == 'Average Score1' : yplot[i] = link.avgscore1
+    if y == 'Average Score2' : yplot[i] = link.avgscore2 
+    if y == 'Maximum Score1' : yplot[i] = link.maxscore1 
+    if y == 'Maximum Score2' : yplot[i] = link.maxscore2 
+    if y == 'Sum of Score1' : yplot[i] = link.sumscore1 
+    if y == 'Sum of Score2' : yplot[i] = link.sumscore2 
+    if y == 'Number of Scans' : yplot[i] = link.nscans 
+    if y == 'Number of Species' : yplot[i] = link.nspecies 
+
+  return xplot, yplot
+  
+#
+# Function that sets the data for plotting the correlation of a score
+# as a function of the tolerance
+#
+# tol has three elements: minimum, maximum and step: ex: [-3., 15., 0.5]
+# and corresponds to the deviations from the dmax set for each link
+#
+
+def pbs_vs_tol(links,score,tol=None) :
+
+  import numpy as np
+
+  if tol == None :
+    tol = [ -3., 15., 0.5 ]
+
+  data_types = ['Consistency',\
+                'Average Score1',\
+                'Average Score2',\
+                'Maximum Score1',\
+                'Maximum Score2',\
+                'Sum of Score1',\
+                'Sum of Score2',\
+                'Number of Scans',\
+                'Number of Species' ]
+
+  if not score in data_types : 
+    print ' ERROR: score must be one of the following data types: '
+    for type in data_types :
+      print type
+
+  ntol = int((tol[1] - tol[0])/tol[2])
+  x = np.zeros(ntol)
+  i=-1
+  for xtol in x :
+    i=i+1
+    x[i] = tol[0] + tol[2]*i
+  pbs = np.zeros(ntol)
+  
+  nlinks = len(links)
+  y = np.zeros(nlinks,dtype=float)
+  consistency = np.zeros(nlinks,dtype=bool)
+
+  i=-1
+  for xtol in x :
+    i=i+1
+
+    j=-1
+    for link in links :
+      j=j+1
+      consistency[j] = setconsistency(link,xtol)
+
+      if score == 'Consistency' : y[j] = link.consistency
+      if score == 'Average Score1' : y[j] = link.avgscore1
+      if score == 'Average Score2' : y[j] = link.avgscore2 
+      if score == 'Maximum Score1' : y[j] = link.maxscore1 
+      if score == 'Maximum Score2' : y[j] = link.maxscore2 
+      if score == 'Sum of Score1' : y[j] = link.sumscore1 
+      if score == 'Sum of Score2' : y[j] = link.sumscore2 
+      if score == 'Number of Scans' : y[j] = link.nscans 
+      if score == 'Number of Species' : y[j] = link.nspecies 
+
+    # Compute pbs
+    pbs[i] = point_biserial(consistency,y)
+
+  return x, pbs
+
+    
+  
+
+
+
+
+
+
+
+
+
+
+
+
 
