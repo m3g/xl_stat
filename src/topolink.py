@@ -1,0 +1,245 @@
+#
+# Return one letter aminoacid code from three-letter input
+#
+
+def oneletter(x):
+  d = {'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
+       'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N', 
+       'GLY': 'G', 'HIS': 'H', 'LEU': 'L', 'ARG': 'R', 'TRP': 'W', 
+       'ALA': 'A', 'VAL':'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M'}
+  return d[x]
+
+def threeletter(x):
+  d = { 'C':'CYS', 'D':'ASP', 'S':'SER', 'Q':'GLN', 'K':'LYS',
+        'I':'ILE', 'P':'PRO', 'T':'THR', 'F':'PHE', 'N':'ASN', 
+        'G':'GLY', 'H':'HIS', 'L':'LEU', 'R':'ARG', 'W':'TRP', 
+        'A':'ALA', 'V':'VAL', 'E':'GLU', 'Y':'TYR', 'M':'MET' }
+  return d[x]
+
+#
+# Function and classes for reading links
+#
+
+class Link :
+  def __init__(self,name,nscans) :
+    self.name = name
+    self.nscans = int(nscans)
+    self.consistency = False
+    self.deuc = 0.
+    self.dtop = 0.
+
+  def init_scans(self) :
+    if self.nscans == 0 : 
+      print ' ERROR: nscans = 0 ', self.name
+    self.score1 = [ 0. for i in range(0,self.nscans) ]
+    self.score2 = [ 0. for i in range(0,self.nscans) ]
+    self.mplush = [ 0. for i in range(0,self.nscans) ]
+
+  def init_index(self) :
+    self.str = self.name.split('-')
+    self.residue1_index = int(self.str[0][1:])
+    self.residue2_index = int(self.str[1][1:])
+
+  def set_scores(self) :
+    unique = [self.mplush[0]]
+    for i in range(1,self.nscans) :
+      if not self.mplush_repeat(self.mplush[i],unique) :
+        unique.append(self.mplush[i])
+    self.nspecies = len(unique)
+
+    self.avgscore1 = sum(self.score1)/len(self.score1)
+    self.avgscore2 = sum(self.score2)/len(self.score2)
+    self.maxscore1 = max(self.score1)
+    self.maxscore2 = max(self.score2)
+    self.sumscore1 = sum(self.score1)
+    self.sumscore2 = sum(self.score2)
+
+  def mplush_repeat(self,mplush,unique) :
+    for data in unique :
+      if abs( mplush - data ) < 1.0 : 
+        return True
+    return False
+
+# Function that compares two links
+
+def is_link(name1,name2) :
+  r1 = name1.split('-')
+  r2 = name2.split('-')
+  if ( r1[0] == r2[0] and r1[1] == r2[1] ) or \
+     ( r1[1] == r2[0] and r1[0] == r2[1] ) :
+    return True
+  return False
+
+# Function that checks if the link belongs to the chosen domain
+
+def in_domain(name,domain) :
+  r = name.split('-')
+  # Remove wrong assignments for which the two residues are the same
+  if r[0] == r[1] : return False
+  # Check if pair is in domain
+  if ( int(r[0][1:]) >= int(domain[0]) and \
+       int(r[0][1:]) <= int(domain[1]) ) and \
+     ( int(r[1][1:]) >= int(domain[0]) and \
+       int(r[1][1:]) <= int(domain[1]) ) :
+    return True
+  return False
+
+# Function that reads link log and sets link data
+
+def readlog(logfile_name,link) :
+
+  logfile = open(logfile_name)
+  for line in logfile :
+    if line[2:7] == "LINK:" : 
+      residue1_name = oneletter(line[8:12].strip())
+      residue1_index = line[15:19].strip()
+      residue2_name = oneletter(line[25:29].strip())
+      residue2_index = line[32:36].strip()
+      name = residue1_name+residue1_index+'-'+residue2_name+residue2_index
+      deuc = float(line[43:51])
+      dtop = float(line[52:61].replace(">",""))
+      if is_link(name,link.name) :
+        logfile.close()
+        return deuc, dtop
+  logfile.close()
+  return -1., -1.
+
+# Function that reads the linker length from a topolink input file with linktype
+# definitions
+
+def getdmax(linktype_file,link) :
+
+  linktype_file = open(linktype_file)
+  for line in linktype_file :
+    if "linktype" in line : 
+      data = line.split()
+      residue1_name = oneletter(data[1])
+      residue2_name = oneletter(data[5])
+      dmax = float(data[9])
+      name = link.name.split('-')
+      if ( name[0][0] == residue1_name and name[1][0] == residue2_name ) or \
+         ( name[0][0] == residue2_name and name[1][0] == residue1_name ) : 
+        linktype_file.close()
+        return dmax
+  linktype_file.close()
+  return -1.
+
+# Print link in the topolink format
+
+def write(link) :
+  data = link.name.split("-")
+  res1_name = threeletter(data[0][0])
+  res2_name = threeletter(data[1][0])
+  res1_index = int(data[0][1:])
+  res2_index = int(data[1][1:])
+  print '{} {:3} {} {:3} {} {:3.2f} {:3.2f}'.format(res1_name,res1_index,res2_name,res2_index,link.consistency,link.dtop,link.dmax)
+  
+  
+# 
+# Compute point-biserial correlation (x assumes 0 or 1 values, y is continuous)
+# x is boolean (True or False for each group)
+#
+
+def point_biserial(x,y) :
+
+  import numpy as np
+
+  ndata = np.size(x)
+  g1 = np.zeros(ndata,dtype=bool)
+  g2 = np.zeros(ndata,dtype=bool)
+  i = 0
+  for value in x :
+    if x[i] :
+      g1[i] = True
+    else :
+      g2[i] = True
+    i = i + 1
+
+  data1 = y[g1]
+  data2 = y[g2]
+
+  n1 = len(data1)
+  n2 = len(data2)
+  if n1 == 0 or n2 == 0 : return 0.
+
+  avg1 = float(sum(data1))/n1
+  avg2 = float(sum(data2))/n2
+  sd = np.std(y)
+
+  pbs = ( ( avg1 - avg2 ) / sd ) * np.sqrt( float(n1*n2) / (ndata**2) )
+
+  return pbs
+
+#
+# Function that reads the xml file generated by sim-xl
+#
+
+def readxml(data_file_name,domain) :
+
+  data_file = open(data_file_name)
+  nlinks = 0
+  for line in data_file :
+    if "(" in line : 
+      line = line.replace(" (","",2)
+      line = line.replace(") - ","-")
+      line = line.replace(")","")
+      name = line.strip()
+      if in_domain(name,domain) : nlinks = nlinks + 1
+  data_file.seek(0)
+
+  links = [ Link("None",0) for i in range(nlinks) ]  
+
+  ilink = -1
+  for line in data_file :
+
+    if "(" in line : 
+      line = line.replace(" (","",2)
+      line = line.replace(") - ","-")
+      line = line.replace(")","")
+      name = line.strip()
+      if in_domain(name,domain) :
+        ilink = ilink + 1
+        links[ilink].name = line.strip()
+      
+    if "Scan" in line : 
+      if in_domain(name,domain) : 
+        links[ilink].nscans = links[ilink].nscans + 1
+
+  data_file.seek(0)
+
+  for link in links :
+    link.init_scans()
+    link.init_index()
+
+  ilink = -1
+  for line in data_file :
+    
+    if "(" in line : 
+      line = line.replace(" (","",2)
+      line = line.replace(") - ","-")
+      line = line.replace(")","")
+      name = line.strip()
+      if in_domain(name,domain) :
+        ilink = ilink + 1
+        iscan = 0
+  
+    if "Scan" in line : 
+      if in_domain(name,domain) : 
+  
+        line = line.replace("Scan:"," ")
+        line = line.replace("Secondary Score:"," ")
+        line = line.replace("Score:"," ")
+        line = line.replace("Experimental M+H:"," ")
+        data = line.split()
+  
+        links[ilink].score1[iscan] =  float(data[1])
+        links[ilink].score2[iscan] =  float(data[2])
+        links[ilink].mplush[iscan] =  float(data[3])
+  
+        iscan = iscan + 1
+  
+  for link in links :
+    link.set_scores()
+
+  return nlinks, links
+
