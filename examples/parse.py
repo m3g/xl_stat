@@ -1,10 +1,10 @@
 #!/usr/bin/python
 
 import sys
-# include path for topolink.py file
+# include path for xl_stat.py file
 sys.path.append('../src/')
 
-import topolink
+import xl_stat
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -36,10 +36,10 @@ topolink_input = "topolink.inp"
 # Read all files to get link data
 #
 
-nlinks, links = topolink.read_all(xml_file=xml_file,\
-                                  topolink_log=topolink_log,\
-                                  topolink_input=topolink_input,\
-                                  domain=domain)
+nlinks, links = xl_stat.read_all(xml_file=xml_file,\
+                                 topolink_log=topolink_log,\
+                                 topolink_input=topolink_input,\
+                                 domain=domain)
 
 # indicators available: 
 
@@ -50,12 +50,12 @@ scores = [ 'Average Score1', 'Average Score2',
 #
 # Remove one of the links from the list, if you want
 #
-#links = topolink.remove(links,'S133-K99')
+#links = xl_stat.remove(links,'S133-K99')
 
 #
 # Plot one score as a function of the other, for a given tolerance relative to dmax
 #
-#x, y = topolink.setplot(links,x='Consistency',y='Number of Scans',tol=5.)
+#x, y = xl_stat.setplot(links,x='Consistency',y='Number of Scans',tol=5.)
 #plt.plot(x,y,'o')
 #plt.xlim(-0.5,1.5) # Uncomment if x is consistency for a nice plot
 #plt.show()
@@ -65,7 +65,7 @@ scores = [ 'Average Score1', 'Average Score2',
 # Plot the point-biserial correlation as function of the tolerance, for one score
 # tol=[-3.,15.,0.5] is the minimum, maximum and step of the tolerance relative do dmax.
 #
-#x, pbs = topolink.pbs_vs_tol(links,score='Consistency',tol=[-3., 20., 0.5])
+#x, pbs = xl_stat.pbs_vs_tol(links,score='Consistency',tol=[-3., 20., 0.5])
 #plt.plot(x,pbs)
 #plt.show()
 #sys.exit()
@@ -78,7 +78,7 @@ scores = [ 'Average Score1', 'Average Score2',
 iplot = 0
 for score in scores :
   iplot=iplot+1
-  x, pbs = topolink.pbs_vs_tol(links,score=score,tol=[-3., 20., 0.5]) 
+  x, pbs = xl_stat.pbs_vs_tol(links,score=score,tol=[-3., 20., 0.5]) 
   plt.subplot(3,2,iplot)
   plt.plot(x,pbs,color='black')
   plt.title(score,size=12)
@@ -140,7 +140,7 @@ if do_histogram :
 # Final plots
 
 for iscore in range(0,nscores) :
-  pbs[iscore] = topolink.point_biserial(x,y[iscore])
+  pbs[iscore] = xl_stat.point_biserial(x,y[iscore])
 
 for iscore in range(0,nscores) :
   iplot=iscore+1
@@ -206,7 +206,7 @@ if test :
        link.nspecies >= score[2] or \
        link.nscans >= score[3] :
       nget = nget + 1
-      topolink.write(link)
+      xl_stat.write(link)
       if link.consistency : nc = nc + 1
   print xml_file, domain
   print '{:4} {:4} {:3.2f} {:3.2f} {:3.2f} {:3} {:3}'.format(nget, nc, score[0], score[1], score[2], score[3], float(nc)/nget)
