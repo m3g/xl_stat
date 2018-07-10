@@ -17,9 +17,9 @@ linkdir ./links
 
 # What cross-links to compute (all/reactive/observed)
 
-compute observed
+#compute observed
 #compute reactive
-#compute all
+compute all
 
 # If only inter-domain (inter-chain) links are of interested, uncomment the following line
 #interchain
@@ -38,16 +38,6 @@ experiment Diamina
   linktype   GLU     all     all      CB          ASP     all     all       CB        15.6
   linktype   ASP     all     all      CB          ASP     all     all       CB        14.3
 
-  observed GLU A 37  GLU A 53
-  observed ASP A 22  GLU A 4
-  observed ASP A 75  GLU A 86
-  observed GLU A 32  GLU A 53
-  observed GLU A 62  GLU A 86
-  observed ASP A 22  GLU A 13
-  observed ASP A 38  GLU A 53
-  observed ASP A 38  GLU A 46
-  observed GLU A 20  GLU A 13
-
 end experiment Diamina
 
 
@@ -59,12 +49,6 @@ experiment zerolength
   linktype   GLU     all     all      CB          LYS     all     all       CB        12.7
   linktype   GLU     all     all      CB          SER     all     all       CB         8.8
   linktype   ASP     all     all      CB          SER     all     all       CB         7.5
-
-  observed SER A  71  GLU A 86
-  observed SER A 116  GLU A 111
-  observed GLU A  86  LYS A  99
-  observed SER A  71  ASP A 75
-  observed SER A 57   ASP A 75
 
 end experiment zerolength
 
@@ -78,21 +62,6 @@ experiment DSS
   linktype   LYS     all     all      CB          SER     all     all       CB        18.2
   linktype   SER     all     all      CB          SER     all     all       CB        14.3
 
-  observed LYS A  17  MET A  1
-  observed SER A  71  SER A 78
-  observed SER A 116  LYS A  17
-  observed LYS A  17  LYS A  113
-  observed LYS A 113  MET A  1
-  observed LYS A 113  LYS A  6
-
-  # With residues greater than 128
-  #observed SER A 132  LYS A  99
-  #observed SER A 133  LYS A  99
-  #observed SER A 131  LYS A  99
-  #observed SER A 133  LYS A  8
-  #observed SER A 131  SER A 132
-  #observed SER A 132  LYS A  8
-   
 end experiment DSS
 
 # Optional parameters 

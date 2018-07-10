@@ -3133,6 +3133,10 @@ Scan: 33031	Score: 2.000	Secondary Score: 0.516	Experimental M+H: 4763.315312279
 S (104) - D (236)			
 Scan: 16735	Score: 2.000	Secondary Score: 0.800	Experimental M+H: 3675.83912642635
 			
+SIM-XL Hits Detail			
+Protein 1: 4F5S:A|PDBID|CHAIN|SEQUENCE (1st aminoacid)			
+Protein 2: 4F5S:A|PDBID|CHAIN|SEQUENCE (2nd aminoacid)			
+			
 K (242) - K (211)			
 Scan: 20024	Score: 5.414	Secondary Score: 3.208	Experimental M+H: 3750.81050927858
 Scan: 19841	Score: 5.167	Secondary Score: 3.062	Experimental M+H: 3750.81625077489

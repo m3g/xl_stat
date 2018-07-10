@@ -78,6 +78,12 @@ class Link :
     self.residue1_index = int(self.str[0][1:])
     self.residue2_index = int(self.str[1][1:])
 
+  def mplush_repeat(self,mplush,unique) :
+    for data in unique :
+      if abs( mplush - data ) < 1.0 : 
+        return True
+    return False
+
   def set_scores(self) :
     unique = [self.mplush[0]]
     for i in range(1,self.nscans) :
@@ -92,13 +98,22 @@ class Link :
     self.sumscore1 = sum(self.score1)
     self.sumscore2 = sum(self.score2)
 
-  def mplush_repeat(self,mplush,unique) :
-    for data in unique :
-      if abs( mplush - data ) < 1.0 : 
-        return True
-    return False
+  def getscore(self,score) :
+    if score == 'Consistency' : return self.consistency
+    if score == 'Average Score1' : return self.avgscore1
+    if score == 'Average Score2' : return self.avgscore2 
+    if score == 'Maximum Score1' : return self.maxscore1 
+    if score == 'Maximum Score2' : return self.maxscore2 
+    if score == 'Sum of Score1' : return self.sumscore1 
+    if score == 'Sum of Score2' : return self.sumscore2 
+    if score == 'Number of Scans' : return self.nscans 
+    if score == 'Number of Species' : return self.nspecies 
+    return None
 
+
+#
 # Function that compares two links
+#
 
 def is_link(name1,name2) :
   r1 = name1.split('-')
@@ -236,11 +251,8 @@ def readxml(data_file_name,domain) :
   nlinks = 0
   for line in data_file :
     if not comment(line) : 
-      if "(" in line : 
-        line = line.replace(" (","",2)
-        line = line.replace(") - ","-")
-        line = line.replace(")","")
-        name = line.strip()
+      if newlink(line) != None :
+        name = newlink(line) 
         if in_domain(name,domain) : nlinks = nlinks + 1
   data_file.seek(0)
 
@@ -253,11 +265,8 @@ def readxml(data_file_name,domain) :
   ilink = -1
   for line in data_file :
     if not comment(line) : 
-      if "(" in line : 
-        line = line.replace(" (","",2)
-        line = line.replace(") - ","-")
-        line = line.replace(")","")
-        name = line.strip()
+      if newlink(line) != None :
+        name = newlink(line) 
         if in_domain(name,domain) :
           ilink = ilink + 1
           links[ilink].name = name
@@ -278,11 +287,8 @@ def readxml(data_file_name,domain) :
   for line in data_file :
     
     if not comment(line) : 
-      if "(" in line : 
-        line = line.replace(" (","",2)
-        line = line.replace(") - ","-")
-        line = line.replace(")","")
-        name = line.strip()
+      if newlink(line) != None :
+        name = newlink(line) 
         if in_domain(name,domain) :
           ilink = ilink + 1
           iscan = 0
@@ -331,34 +337,47 @@ def comment(line) :
     return False
 
 #
+# Check if a line in a xml file is a new link line, and return
+# its name if so
+#
+    
+def newlink(line) : 
+
+  residues = { 'C', 'D', 'S', 'Q', 'K',
+               'I', 'P', 'T', 'F', 'N', 
+               'G', 'H', 'L', 'R', 'W', 
+               'A', 'V', 'E', 'Y', 'M' }
+
+  if "(" in line : 
+    line = line.replace(" (","",2)
+    line = line.replace(") - ","-")
+    line = line.replace(")","")
+    name = line.strip()
+    data = name.split('-')
+    if len(data) == 2 : 
+      if ( data[0][0] in residues ) and ( data[1][0] in residues ) :
+        return name
+
+  return None
+
+#
 # Function that returns data to be ploted
 #
 
 def setplot(links,x,y,tol=None) :
 
+  from sys import exit
   import numpy as np
 
   if tol == None : tol = 0.
 
-  data_types = ['Consistency',\
-                'Average Score1',\
-                'Average Score2',\
-                'Maximum Score1',\
-                'Maximum Score2',\
-                'Sum of Score1',\
-                'Sum of Score2',\
-                'Number of Scans',\
-                'Number of Species' ]
+  if links[0].getscore(x) == None : 
+    print ' ERROR: x must be one of the available indicators. '
+    exit()
 
-  if not x in data_types : 
-    print ' ERROR: x must be one of the following data types: '
-    for type in data_types :
-      print type
-
-  if not y in data_types : 
-    print ' ERROR: x must be one of the following data types: '
-    for type in data_types :
-      print type
+  if links[0].getscore(y) == None : 
+    print ' ERROR: y must be one of the available indicators. '
+    exit()
 
   # Set xplot and yplot vectors that will be returned
 
@@ -370,28 +389,12 @@ def setplot(links,x,y,tol=None) :
   for link in links : 
     i=i+1
 
-    # Check consistency according to given tol
-    consistency = setconsistency(link,tol)
+    if x == 'Consistency' : 
+      xplot[i] = setconsistency(link,tol) # Check consistency according to given tol
+    else : 
+      xplot[i] = link.getscore(x)
 
-    if x == 'Consistency' : xplot[i] = consistency
-    if x == 'Average Score1' : xplot[i] = link.avgscore1
-    if x == 'Average Score2' : xplot[i] = link.avgscore2 
-    if x == 'Maximum Score1' : xplot[i] = link.maxscore1 
-    if x == 'Maximum Score2' : xplot[i] = link.maxscore2 
-    if x == 'Sum of Score1' : xplot[i] = link.sumscore1 
-    if x == 'Sum of Score2' : xplot[i] = link.sumscore2 
-    if x == 'Number of Scans' : xplot[i] = link.nscans 
-    if x == 'Number of Species' : xplot[i] = link.nspecies 
-    
-    if y == 'Consistency' : yplot[i] = link.consistency
-    if y == 'Average Score1' : yplot[i] = link.avgscore1
-    if y == 'Average Score2' : yplot[i] = link.avgscore2 
-    if y == 'Maximum Score1' : yplot[i] = link.maxscore1 
-    if y == 'Maximum Score2' : yplot[i] = link.maxscore2 
-    if y == 'Sum of Score1' : yplot[i] = link.sumscore1 
-    if y == 'Sum of Score2' : yplot[i] = link.sumscore2 
-    if y == 'Number of Scans' : yplot[i] = link.nscans 
-    if y == 'Number of Species' : yplot[i] = link.nspecies 
+    yplot[i] = link.getscore(y)
 
   return xplot, yplot
   
@@ -405,25 +408,15 @@ def setplot(links,x,y,tol=None) :
 
 def pbs_vs_tol(links,score,tol=None) :
 
+  from sys import exit
   import numpy as np
 
   if tol == None :
     tol = [ -3., 15., 0.5 ]
 
-  data_types = ['Consistency',\
-                'Average Score1',\
-                'Average Score2',\
-                'Maximum Score1',\
-                'Maximum Score2',\
-                'Sum of Score1',\
-                'Sum of Score2',\
-                'Number of Scans',\
-                'Number of Species' ]
-
-  if not score in data_types : 
-    print ' ERROR: score must be one of the following data types: '
-    for type in data_types :
-      print type
+  if links[0].getscore(score) == None :
+    print ' ERROR: score must be one of the available indicators. '
+    exit()
 
   ntol = int((tol[1] - tol[0])/tol[2])
   x = np.zeros(ntol)
@@ -445,22 +438,13 @@ def pbs_vs_tol(links,score,tol=None) :
     for link in links :
       j=j+1
       consistency[j] = setconsistency(link,xtol)
-
-      if score == 'Consistency' : y[j] = link.consistency
-      if score == 'Average Score1' : y[j] = link.avgscore1
-      if score == 'Average Score2' : y[j] = link.avgscore2 
-      if score == 'Maximum Score1' : y[j] = link.maxscore1 
-      if score == 'Maximum Score2' : y[j] = link.maxscore2 
-      if score == 'Sum of Score1' : y[j] = link.sumscore1 
-      if score == 'Sum of Score2' : y[j] = link.sumscore2 
-      if score == 'Number of Scans' : y[j] = link.nscans 
-      if score == 'Number of Species' : y[j] = link.nspecies 
+      y[j] = link.getscore(score)
 
     # Compute pbs
     pbs[i] = point_biserial(consistency,y)
 
   return x, pbs
-    
+
 #
 # Convert one letter and three-letter amino acid codes
 #
@@ -479,17 +463,5 @@ def threeletter(x):
         'A':'ALA', 'V':'VAL', 'E':'GLU', 'Y':'TYR', 'M':'MET' }
   return d[x]
 
+
   
-
-
-
-
-
-
-
-
-
-
-
-
-

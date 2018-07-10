@@ -16,15 +16,15 @@ import histogram
 
 plot_dir = "./"
 
-protein_name='SalbIII'
-xml_file = 'salbiii_hitsDetail.dat'
-topolink_log = 'salbiii_topolink.log'
-domain = [2,134]
+#protein_name='SalbIII'
+#xml_file = 'salbiii_hitsDetail.dat'
+#topolink_log = 'salbiii_topolink.log'
+#domain = [2,134]
 
-#protein_name='ALB'
-#xml_file = 'alb_hitsDetail.dat'
-#topolink_log = 'alb_topolink.log'
-#domain = [1,201] ; protein_name=protein_name+'-D1'
+protein_name='ALB'
+xml_file = 'alb_hitsDetail.dat'
+topolink_log = 'alb_topolink.log'
+domain = [1,201] ; protein_name=protein_name+'-D1'
 #domain = [202,390] ; protein_name=protein_name+'-D2' 
 #domain = [391,584] ; protein_name=protein_name+'-D3' 
 
@@ -43,8 +43,9 @@ nlinks, links = topolink.read_all(xml_file=xml_file,\
 
 # indicators available: 
 
-scores = [ 'Average Score1', 'Average Score2', 'Number of Species', \
-           'Maximum Score1', 'Maximum Score2', 'Number of Scans' ]
+scores = [ 'Average Score1', 'Average Score2', 
+           'Number of Scans', 'Number of Species', \
+           'Maximum Score1', 'Maximum Score2' ]
 
 #
 # Remove one of the links from the list, if you want
@@ -56,7 +57,7 @@ scores = [ 'Average Score1', 'Average Score2', 'Number of Species', \
 #
 #x, y = topolink.setplot(links,x='Consistency',y='Number of Scans',tol=5.)
 #plt.plot(x,y,'o')
-#plt.xlim(-0.5,1.5)
+#plt.xlim(-0.5,1.5) # Uncomment if x is consistency for a nice plot
 #plt.show()
 #sys.exit()
 
