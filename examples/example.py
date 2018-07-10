@@ -96,60 +96,25 @@ plt.gcf().set_size_inches(6,8)
 plt.savefig(plot_dir+'/'+protein_name+'_pbs_correlations.pdf')
 plt.close()
 
-sys.exit()
-
-#voltar
-
 #
 # Plot the actual data from which the PBS correlations are computed
+# (the scores as a function of the consistency with the model, for
+#  a given tolerance)
 #
 
 tol = 5.
-ilink=-1
-x = np.zeros(nlinks,dtype=bool) 
-pbs = np.zeros(nscores,dtype=float)
-for link in links :
-  ilink=ilink+1
-  if link.dtop > 0. and link.dtop <= link.dmax + tol :
-    link.consistency = True
-  else : 
-    link.consistency = False
-  x[ilink] = link.consistency
-
-ncons = len(x[x])
-
-do_histogram = False
-if do_histogram :
-  iscore=5
-  hx, hy = histogram.histogram(y[iscore][x],step=0.5,int=1)
-  plt.plot(hx,hy)
-  
-  notx = np.ones(nlinks,dtype=bool)
-  i=-1
-  for val in x :
-    i=i+1
-    if val : notx[i] = False  
-  
-  hx, hy = histogram.histogram(y[iscore][notx],step=0.5,int=1)
-  plt.plot(hx,hy,color='red')                         
-  
-  plt.show()
-  plt.close()
-  sys.exit()
-
-# Final plots
-
-for iscore in range(0,nscores) :
-  pbs[iscore] = xl_stat.point_biserial(x,y[iscore])
-
-for iscore in range(0,nscores) :
-  iplot=iscore+1
+iplot = 0
+for score in scores : 
+  x, y = xl_stat.setplot(links,x='Consistency',y=score,tol=tol)
+  pbs = xl_stat.point_biserial(x,y)
+  iplot=iplot+1
   plt.subplot(3,2,iplot)
-  plt.plot(x,y[iscore],'o',alpha=0.3,color='black')
+  plt.plot(x,y,'o',alpha=0.3,color='black')
   plt.xlabel('Consistency',size=12)
-  plt.ylabel(label[iscore],size=12)
+  plt.ylabel(score,size=12)
   plt.xlim(-0.5,1.5)
-
+  plt.annotate('R='+'{:3.2f}'.format(pbs),xy=(0.02,0.9),size=12,xycoords='axes fraction')
+ 
 plt.subplots_adjust(left=0.14, 
                     bottom=0.10, 
                     right=0.95, 
@@ -161,26 +126,8 @@ plt.savefig(plot_dir+'/'+protein_name+'_scores_consistency.pdf')
 plt.close()
 
 
-iplot=0
-for iscore in range(0,nscores-1) :
-  for jscore in range(iscore+1,nscores) :
-    iplot=iplot+1
-    plt.subplot(5,3,iplot)
-    plt.xticks(size=8)
-    plt.yticks(size=8)
-    plt.xlabel(label[iscore],size=8)
-    plt.ylabel(label[jscore],size=8)
-    plt.plot(y[iscore],y[jscore],'o',color='black',alpha=0.5)
+sys.exit()
 
-plt.subplots_adjust(left=0.14, 
-                    bottom=0.10, 
-                    right=0.95, 
-                    top=0.90, 
-                    wspace=0.4, 
-                    hspace=0.6)
-plt.gcf().set_size_inches(6,8)
-plt.savefig(plot_dir+'/'+protein_name+'_scores.pdf')
-plt.close()
 
 #
 # Testing 22   17 2.75 1.47 1.90 0.77
