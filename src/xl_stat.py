@@ -446,6 +446,32 @@ def pbs_vs_tol(links,score,tol=None) :
   return x, pbs
 
 #
+# Filter links according to spectral parameters
+#
+
+def filter(links,scores,filter_type) :
+
+  filtered = []
+
+  if filter_type == 'or' :
+    for link in links :
+      select = False
+      for score in scores :
+        if link.getscore(score) >= scores[score] :
+          select = True
+      if select : filtered.append(link)
+
+  if filter_type == 'and' :
+    for link in links :
+      select = True
+      for score in scores :
+        if link.getscore(score) <= scores[score] :
+          select = False
+      if select : filtered.append(link)
+
+  return filtered
+
+#
 # Convert one letter and three-letter amino acid codes
 #
 
@@ -462,6 +488,8 @@ def threeletter(x):
         'G':'GLY', 'H':'HIS', 'L':'LEU', 'R':'ARG', 'W':'TRP', 
         'A':'ALA', 'V':'VAL', 'E':'GLU', 'Y':'TYR', 'M':'MET' }
   return d[x]
+
+
 
 
   

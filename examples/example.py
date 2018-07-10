@@ -125,95 +125,84 @@ plt.gcf().set_size_inches(6,8)
 plt.savefig(plot_dir+'/'+protein_name+'_scores_consistency.pdf')
 plt.close()
 
+#
+# Output the result of using a set of parameters to filter links
+#
+
+print '# protein: ',protein_name, domain
+
+scores = { 'Average Score1':      4.00 , \
+           'Average Score2':      2.00 , \
+           'Number of Species':   4    , \
+           'Number of Scans':    13    , \
+           'Maximum Score1':    500.   , \
+           'Maximum Score2':    500.   }
+
+#filter_type='and'
+filter_type='or'
+
+filtered_links = xl_stat.filter(links,scores,filter_type)
+
+for link in filtered_links :
+  xl_stat.write(link)
+
 
 sys.exit()
-
-
-#
-# Testing 22   17 2.75 1.47 1.90 0.77
-#2.25 0.09 1.80
-#
-#2.02 0.14 1.00 13.2
-
-#voltar
-test = True
-if test :
-  score = [ 4.40, 2.53, 9.10, 13.2 ]
-  score = [ 3.01, 2.53, 2, 24 ]
-  score = [ 3.7, 2.53, 4, 33 ]
-              
-  nget = 0
-  nc = 0
-  for link in links :
-    #if link.avgscore1 >= score[0] or \
-    #   link.avgscore2 >= score[1] or \
-    #   link.nspecies >= score[2] or \
-    #   link.nscans >= score[3] :
-    if link.maxscore1 >= score[0] or \
-       link.nspecies >= score[2] or \
-       link.nscans >= score[3] :
-      nget = nget + 1
-      xl_stat.write(link)
-      if link.consistency : nc = nc + 1
-  print xml_file, domain
-  print '{:4} {:4} {:3.2f} {:3.2f} {:3.2f} {:3} {:3}'.format(nget, nc, score[0], score[1], score[2], score[3], float(nc)/nget)
-
-  sys.exit()
 
 #
 # Search best set of scores
 #
-
-
-else :
-   
-  # Number of residues in domain
-
-  n = domain[1]-domain[0]
-
-  # We want a set of about 2N/10 constraints, where N is the number of
-  # residues of the protein
-  
-  n_min = int((n-0.05*n)*(2./10.))
-  n_max = int((n+0.05*n)*(2./10.))
-  print n_min, n_max
-  
-  # We will search for all possible combinations of three of the scores to
-  # get the best set (the one with the greatest number of true positives)
-  
-  nsteps = 10
-  minscores = np.array([ min(y[0]), min(y[1]), min(y[2]), min(y[5]) ])
-  maxscores = np.array([ max(y[0]), max(y[1]), max(y[2]), max(y[5]) ])
-  step = (maxscores - minscores)/nsteps
-  
-  print 'Nget  Nc  avsc1   avsc2  nspec  nscans nc/nget  totnc'
-  ncmax = 0
-  for i in range(0,nsteps) :
-    #for j in range(0,nsteps) :
-       for k in range(0,nsteps) :
-         for l in range(0,nsteps) : 
-  
-           score0 = minscores[0] + i*step[0]
-           #score1 = minscores[1] + j*step[1]
-           score2 = minscores[2] + k*step[2]
-           score3 = minscores[3] + l*step[3]
-  
-           nget = 0
-           nc = 0
-           for link in links : 
-              #if link.avgscore1 >= score0 or \
-              #   link.avgscore2 >= score1 or \
-              #   link.nspecies >= score2 or \
-              #   link.nscans >= score3 :
-              if link.maxscore1 >= score0 or \
-                 link.nspecies >= score2 or \
-                 link.nscans >= score3 :
-                nget = nget + 1
-                if link.consistency : nc = nc + 1
-           if nget >= n_min and nget <= n_max : 
-             #print '{:4} {:3} {:4.2f} {:3.2f} {:3.2f} {:3} {:3.2f} {:3}'.format(nget, nc, score0, score1, score2, score3, float(nc)/nget, ncons)
-             print '{:4} {:3} {:4.2f} {:3.2f} {:3} {:3.2f} {:3}'.format(nget, nc, score0, score2, score3, float(nc)/nget, ncons)
-
-
-sys.exit()
-
+#
+#
+#else :
+#   
+#  # Number of residues in domain
+#
+#  n = domain[1]-domain[0]
+#
+#  # We want a set of about 2N/10 constraints, where N is the number of
+#  # residues of the protein
+#  
+#  n_min = int((n-0.05*n)*(2./10.))
+#  n_max = int((n+0.05*n)*(2./10.))
+#  print n_min, n_max
+#  
+#  # We will search for all possible combinations of three of the scores to
+#  # get the best set (the one with the greatest number of true positives)
+#  
+#  nsteps = 10
+#  minscores = np.array([ min(y[0]), min(y[1]), min(y[2]), min(y[5]) ])
+#  maxscores = np.array([ max(y[0]), max(y[1]), max(y[2]), max(y[5]) ])
+#  step = (maxscores - minscores)/nsteps
+#  
+#  print 'Nget  Nc  avsc1   avsc2  nspec  nscans nc/nget  totnc'
+#  ncmax = 0
+#  for i in range(0,nsteps) :
+#    #for j in range(0,nsteps) :
+#       for k in range(0,nsteps) :
+#         for l in range(0,nsteps) : 
+#  
+#           score0 = minscores[0] + i*step[0]
+#           #score1 = minscores[1] + j*step[1]
+#           score2 = minscores[2] + k*step[2]
+#           score3 = minscores[3] + l*step[3]
+#  
+#           nget = 0
+#           nc = 0
+#           for link in links : 
+#              #if link.avgscore1 >= score0 or \
+#              #   link.avgscore2 >= score1 or \
+#              #   link.nspecies >= score2 or \
+#              #   link.nscans >= score3 :
+#              if link.maxscore1 >= score0 or \
+#                 link.nspecies >= score2 or \
+#                 link.nscans >= score3 :
+#                nget = nget + 1
+#                if link.consistency : nc = nc + 1
+#           if nget >= n_min and nget <= n_max : 
+#             #print '{:4} {:3} {:4.2f} {:3.2f} {:3.2f} {:3} {:3.2f} {:3}'.format(nget, nc, score0, score1, score2, score3, float(nc)/nget, ncons)
+#             print '{:4} {:3} {:4.2f} {:3.2f} {:3} {:3.2f} {:3}'.format(nget, nc, score0, score2, score3, float(nc)/nget, ncons)
+#
+#
+#sys.exit()
+#
