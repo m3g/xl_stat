@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import sys
+# include path for topolink.py file
 sys.path.append('../src/')
 
 import topolink
@@ -10,7 +11,7 @@ import matplotlib.pyplot as plt
 import histogram
 
 #
-#  Main code
+#  Set system to be analyzed
 #
 
 plot_dir = "./"
@@ -27,42 +28,51 @@ domain = [2,134]
 #domain = [202,390] ; protein_name=protein_name+'-D2' 
 #domain = [391,584] ; protein_name=protein_name+'-D3' 
 
-# Read xml file from SIM-XL
+# topolink input file containing the linktype definitions:
 
-nlinks, links = topolink.readxml(xml_file,domain)
+topolink_input = "topolink.inp"
 
-# Read topolink input to get the length of the linkers
+#
+# Read all files to get link data
+#
 
-for link in links :
-  link.dmax = topolink.getdmax("topolink.inp",link)
-
-# Read topolink log file to get the euclidean and topological distances
-
-for link in links :
-  link.deuc, link.dtop = topolink.readlog(topolink_log,link)
-
-# Set consistency with 0. tolerance:
-
-for link in links :
-  link.consistency = topolink.setconsistency(link,0.)
-
-# Plot one of the scores as a function of consistency 
-
-#x, y = topolink.setplot(links,x='Consistency',y='Average Score1',tol=5.)
-
-# Plot the point-biserial correlation as function of the tolerance, for one score
-# tol=[-3.,15.,0.5] is the minimum, maximum and step of the tolerance relative do dmax.
-
-#x, pbs = topolink.pbs_vs_tol(links,score='Consistency',tol=[-3., 20., 0.5])
-
-#plt.plot(x,pbs)
-#plt.show()
-#sys.exit()
+nlinks, links = topolink.read_all(xml_file=xml_file,\
+                                  topolink_log=topolink_log,\
+                                  topolink_input=topolink_input,\
+                                  domain=domain)
 
 # indicators available: 
 
 scores = [ 'Average Score1', 'Average Score2', 'Number of Species', \
            'Maximum Score1', 'Maximum Score2', 'Number of Scans' ]
+
+#
+# Remove one of the links from the list, if you want
+#
+#links = topolink.remove(links,'S133-K99')
+
+#
+# Plot one score as a function of the other, for a given tolerance relative to dmax
+#
+#x, y = topolink.setplot(links,x='Consistency',y='Number of Scans',tol=5.)
+#plt.plot(x,y,'o')
+#plt.xlim(-0.5,1.5)
+#plt.show()
+#sys.exit()
+
+#
+# Plot the point-biserial correlation as function of the tolerance, for one score
+# tol=[-3.,15.,0.5] is the minimum, maximum and step of the tolerance relative do dmax.
+#
+#x, pbs = topolink.pbs_vs_tol(links,score='Consistency',tol=[-3., 20., 0.5])
+#plt.plot(x,pbs)
+#plt.show()
+#sys.exit()
+
+#
+# For all scores, plot the point-biserial correlation as a function
+# of the deviation fro dmax
+#
 
 iplot = 0
 for score in scores :
@@ -71,7 +81,7 @@ for score in scores :
   plt.subplot(3,2,iplot)
   plt.plot(x,pbs,color='black')
   plt.title(score,size=12)
-  plt.xlabel('L_{max} deviation',size=12)
+  plt.xlabel('d$_{max}$ deviation',size=12)
   plt.ylabel('correlation',size=12)
 
 

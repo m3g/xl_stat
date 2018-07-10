@@ -1,20 +1,58 @@
 #
-# Return one letter aminoacid code from three-letter input
+# Functions to parse sim-xl xml outputs and topolink log files
+#
+# L. Martinez, Institute of Chemistry - University of Campinas
+# Jul 10, 2018 
+# http://m3g.iqm.unicamp.br/topolink
 #
 
-def oneletter(x):
-  d = {'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
-       'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N', 
-       'GLY': 'G', 'HIS': 'H', 'LEU': 'L', 'ARG': 'R', 'TRP': 'W', 
-       'ALA': 'A', 'VAL':'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M'}
-  return d[x]
+#
+# Function that starts everything
+#
 
-def threeletter(x):
-  d = { 'C':'CYS', 'D':'ASP', 'S':'SER', 'Q':'GLN', 'K':'LYS',
-        'I':'ILE', 'P':'PRO', 'T':'THR', 'F':'PHE', 'N':'ASN', 
-        'G':'GLY', 'H':'HIS', 'L':'LEU', 'R':'ARG', 'W':'TRP', 
-        'A':'ALA', 'V':'VAL', 'E':'GLU', 'Y':'TYR', 'M':'MET' }
-  return d[x]
+def read_all(xml_file=None,\
+             topolink_log=None,\
+             topolink_input=None,\
+             domain=None) :
+
+  from sys import exit
+
+  error = False
+  if xml_file == None : 
+    print "ERROR: You need to provide the xml_file."
+    error = True
+  if topolink_log == None : 
+    print "ERROR: You need to provide the topolink log file."
+    error = True
+  if topolink_input == None : 
+    print "ERROR: You need to provide the topolink input file containing linktype information."
+    error = True
+
+  if error : exit()
+
+  if domain == None : domain = [0,100000]
+
+  # Read xml file from SIM-XL
+
+  nlinks, links = readxml(xml_file,domain)
+
+  # Read topolink input to get the length of the linkers
+
+  for link in links :
+    link.dmax = getdmax(topolink_input,link)
+
+  # Read topolink log file to get the euclidean and topological distances
+
+  for link in links :
+    link.deuc, link.dtop = readlog(topolink_log,link)
+
+  # Set consistency with 0. tolerance:
+
+  for link in links :
+    link.consistency = setconsistency(link,tol=0.)
+
+  return nlinks, links
+
 
 #
 # Function and classes for reading links
@@ -192,67 +230,77 @@ def point_biserial(x,y) :
 
 def readxml(data_file_name,domain) :
 
+  # Count the number of links listed
+
   data_file = open(data_file_name)
   nlinks = 0
   for line in data_file :
-    if "(" in line : 
-      line = line.replace(" (","",2)
-      line = line.replace(") - ","-")
-      line = line.replace(")","")
-      name = line.strip()
-      if in_domain(name,domain) : nlinks = nlinks + 1
+    if not comment(line) : 
+      if "(" in line : 
+        line = line.replace(" (","",2)
+        line = line.replace(") - ","-")
+        line = line.replace(")","")
+        name = line.strip()
+        if in_domain(name,domain) : nlinks = nlinks + 1
   data_file.seek(0)
+
+  # Create list of links
 
   links = [ Link("None",0) for i in range(nlinks) ]  
 
+  # Count the number of scans per link
+
   ilink = -1
   for line in data_file :
-
-    if "(" in line : 
-      line = line.replace(" (","",2)
-      line = line.replace(") - ","-")
-      line = line.replace(")","")
-      name = line.strip()
-      if in_domain(name,domain) :
-        ilink = ilink + 1
-        links[ilink].name = line.strip()
-      
-    if "Scan" in line : 
-      if in_domain(name,domain) : 
-        links[ilink].nscans = links[ilink].nscans + 1
-
+    if not comment(line) : 
+      if "(" in line : 
+        line = line.replace(" (","",2)
+        line = line.replace(") - ","-")
+        line = line.replace(")","")
+        name = line.strip()
+        if in_domain(name,domain) :
+          ilink = ilink + 1
+          links[ilink].name = name
+      if "Scan" in line : 
+        if in_domain(name,domain) : 
+          links[ilink].nscans = links[ilink].nscans + 1
   data_file.seek(0)
+
+  # Initialize the scans per link
 
   for link in links :
     link.init_scans()
     link.init_index()
 
+  # Read the score parameters for each scan
+
   ilink = -1
   for line in data_file :
     
-    if "(" in line : 
-      line = line.replace(" (","",2)
-      line = line.replace(") - ","-")
-      line = line.replace(")","")
-      name = line.strip()
-      if in_domain(name,domain) :
-        ilink = ilink + 1
-        iscan = 0
+    if not comment(line) : 
+      if "(" in line : 
+        line = line.replace(" (","",2)
+        line = line.replace(") - ","-")
+        line = line.replace(")","")
+        name = line.strip()
+        if in_domain(name,domain) :
+          ilink = ilink + 1
+          iscan = 0
   
-    if "Scan" in line : 
-      if in_domain(name,domain) : 
-  
-        line = line.replace("Scan:"," ")
-        line = line.replace("Secondary Score:"," ")
-        line = line.replace("Score:"," ")
-        line = line.replace("Experimental M+H:"," ")
-        data = line.split()
-  
-        links[ilink].score1[iscan] =  float(data[1])
-        links[ilink].score2[iscan] =  float(data[2])
-        links[ilink].mplush[iscan] =  float(data[3])
-  
-        iscan = iscan + 1
+      if "Scan" in line : 
+        if in_domain(name,domain) : 
+    
+          line = line.replace("Scan:"," ")
+          line = line.replace("Secondary Score:"," ")
+          line = line.replace("Score:"," ")
+          line = line.replace("Experimental M+H:"," ")
+          data = line.split()
+    
+          links[ilink].score1[iscan] =  float(data[1])
+          links[ilink].score2[iscan] =  float(data[2])
+          links[ilink].mplush[iscan] =  float(data[3])
+    
+          iscan = iscan + 1
   
   for link in links :
     link.set_scores()
@@ -260,11 +308,33 @@ def readxml(data_file_name,domain) :
   return nlinks, links
 
 #
+# Remove a specific link from the list
+#
+
+def remove(links,name) :
+  i=-1
+  for link in links :
+    i=i+1
+    if link.name == name : 
+      del links[i]
+      return links
+
+#
+# Check if a line is commented
+#
+
+def comment(line) :
+  if len(line.strip()) == 0 : return True
+  if line.strip()[0] == "#" :
+    return True
+  else :
+    return False
+
+#
 # Function that returns data to be ploted
 #
 
-def setplot(links,x,y,\
-            tol=None) :
+def setplot(links,x,y,tol=None) :
 
   import numpy as np
 
@@ -290,21 +360,19 @@ def setplot(links,x,y,\
     for type in data_types :
       print type
 
-  # Set consistency according to given tol
-
-  nlinks = len(links) 
-  consistency = np.zeros(nlinks,dtype=bool)
-  for link in links : 
-    consistency = setconsistency(link,tol)
-
   # Set xplot and yplot vectors that will be returned
 
+  nlinks = len(links) 
   xplot = np.zeros(nlinks)
   yplot = np.zeros(nlinks)
 
   i=-1
   for link in links : 
     i=i+1
+
+    # Check consistency according to given tol
+    consistency = setconsistency(link,tol)
+
     if x == 'Consistency' : xplot[i] = consistency
     if x == 'Average Score1' : xplot[i] = link.avgscore1
     if x == 'Average Score2' : xplot[i] = link.avgscore2 
@@ -315,7 +383,7 @@ def setplot(links,x,y,\
     if x == 'Number of Scans' : xplot[i] = link.nscans 
     if x == 'Number of Species' : xplot[i] = link.nspecies 
     
-    if y == 'Consistency' : yplot[i] = consistency
+    if y == 'Consistency' : yplot[i] = link.consistency
     if y == 'Average Score1' : yplot[i] = link.avgscore1
     if y == 'Average Score2' : yplot[i] = link.avgscore2 
     if y == 'Maximum Score1' : yplot[i] = link.maxscore1 
@@ -392,8 +460,25 @@ def pbs_vs_tol(links,score,tol=None) :
     pbs[i] = point_biserial(consistency,y)
 
   return x, pbs
-
     
+#
+# Convert one letter and three-letter amino acid codes
+#
+
+def oneletter(x):
+  d = {'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
+       'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N', 
+       'GLY': 'G', 'HIS': 'H', 'LEU': 'L', 'ARG': 'R', 'TRP': 'W', 
+       'ALA': 'A', 'VAL':'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M'}
+  return d[x]
+
+def threeletter(x):
+  d = { 'C':'CYS', 'D':'ASP', 'S':'SER', 'Q':'GLN', 'K':'LYS',
+        'I':'ILE', 'P':'PRO', 'T':'THR', 'F':'PHE', 'N':'ASN', 
+        'G':'GLY', 'H':'HIS', 'L':'LEU', 'R':'ARG', 'W':'TRP', 
+        'A':'ALA', 'V':'VAL', 'E':'GLU', 'Y':'TYR', 'M':'MET' }
+  return d[x]
+
   
 
 
