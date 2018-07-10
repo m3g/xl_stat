@@ -16,15 +16,15 @@ import histogram
 
 plot_dir = "./"
 
-#protein_name='SalbIII'
-#xml_file = 'salbiii_hitsDetail.dat'
-#topolink_log = 'salbiii_topolink.log'
-#domain = [2,134]
+protein_name='SalbIII'
+xml_file = 'salbiii_hitsDetail.dat'
+topolink_log = 'salbiii_topolink.log'
+domain = [2,134]
 
-protein_name='ALB'
-xml_file = 'alb_hitsDetail.dat'
-topolink_log = 'alb_topolink.log'
-domain = [1,201] ; protein_name=protein_name+'-D1'
+#protein_name='ALB'
+#xml_file = 'alb_hitsDetail.dat'
+#topolink_log = 'alb_topolink.log'
+#domain = [1,201] ; protein_name=protein_name+'-D1'
 #domain = [202,390] ; protein_name=protein_name+'-D2' 
 #domain = [391,584] ; protein_name=protein_name+'-D3' 
 
@@ -125,84 +125,60 @@ plt.gcf().set_size_inches(6,8)
 plt.savefig(plot_dir+'/'+protein_name+'_scores_consistency.pdf')
 plt.close()
 
-#
-# Output the result of using a set of parameters to filter links
-#
+Write = True
+if Write : 
+  #
+  # Output the result of using a set of parameters to filter links
+  #
+  
+  print '# protein: ',protein_name, domain
+  
+             #  Name                 value
+  scores = [ [ 'Average Score1'     , 2.00 ] ,\
+             [ 'Average Score2'     , 2.00 ] ,\
+             [ 'Number of Species'  ,   4  ] ,\
+             [ 'Number of Scans'    ,  13  ] ]
+  
+  filter_type='and'
+  #filter_type='or'
+  
+  filtered_links = xl_stat.filter(links,scores,filter_type)
 
-print '# protein: ',protein_name, domain
+  # Print links selected
+  tol=5.0
+  nc=0
+  for link in filtered_links : 
+    xl_stat.write(link,tol=5.0)
+    if xl_stat.setconsistency(link,tol=5.0) :
+      nc=nc+1
+  print '# Total: ',len(filtered_links), ' NC = ',nc
 
-scores = { 'Average Score1':      4.00 , \
-           'Average Score2':      2.00 , \
-           'Number of Species':   4    , \
-           'Number of Scans':    13    , \
-           'Maximum Score1':    500.   , \
-           'Maximum Score2':    500.   }
+Search = False
+if Search :
 
-#filter_type='and'
-filter_type='or'
+  #
+  # Search best set of scores
+  #
+  
+  # the scores list contains the range of scores to be search, with steps
+               # Name                 min    max  step
+  scores = [ [ 'Average Score1'   ,    0.,  4.00,  0.5 ] , \
+             [ 'Average Score2'   ,    0.,  4.00,  0.5 ] , \
+             [ 'Number of Species',    1,     20,    1 ] , \
+             [ 'Number of Scans'  ,    1,     20,    1 ] ]
+  
+  # Range of filtered selection sizes to be considered (here about 20% of domains size)
+  
+  n = domain[1] - domain[0]         # domain size
+  n_min = int((n-0.05*n)*(2./10.))  # 5% less than 20% of domain size
+  n_max = int((n+0.05*n)*(2./10.))  # 5% more than 20% of domain size
+  nfilter = [ n_min, n_max ]
+  tol=5.
+  filter_type='and'
+   
+  xl_stat.search_filters(links,scores=scores,filter_type=filter_type,nfilter=nfilter,tol=tol) 
 
-filtered_links = xl_stat.filter(links,scores,filter_type)
-
-for link in filtered_links :
-  xl_stat.write(link)
 
 
-sys.exit()
 
-#
-# Search best set of scores
-#
-#
-#
-#else :
-#   
-#  # Number of residues in domain
-#
-#  n = domain[1]-domain[0]
-#
-#  # We want a set of about 2N/10 constraints, where N is the number of
-#  # residues of the protein
-#  
-#  n_min = int((n-0.05*n)*(2./10.))
-#  n_max = int((n+0.05*n)*(2./10.))
-#  print n_min, n_max
-#  
-#  # We will search for all possible combinations of three of the scores to
-#  # get the best set (the one with the greatest number of true positives)
-#  
-#  nsteps = 10
-#  minscores = np.array([ min(y[0]), min(y[1]), min(y[2]), min(y[5]) ])
-#  maxscores = np.array([ max(y[0]), max(y[1]), max(y[2]), max(y[5]) ])
-#  step = (maxscores - minscores)/nsteps
-#  
-#  print 'Nget  Nc  avsc1   avsc2  nspec  nscans nc/nget  totnc'
-#  ncmax = 0
-#  for i in range(0,nsteps) :
-#    #for j in range(0,nsteps) :
-#       for k in range(0,nsteps) :
-#         for l in range(0,nsteps) : 
-#  
-#           score0 = minscores[0] + i*step[0]
-#           #score1 = minscores[1] + j*step[1]
-#           score2 = minscores[2] + k*step[2]
-#           score3 = minscores[3] + l*step[3]
-#  
-#           nget = 0
-#           nc = 0
-#           for link in links : 
-#              #if link.avgscore1 >= score0 or \
-#              #   link.avgscore2 >= score1 or \
-#              #   link.nspecies >= score2 or \
-#              #   link.nscans >= score3 :
-#              if link.maxscore1 >= score0 or \
-#                 link.nspecies >= score2 or \
-#                 link.nscans >= score3 :
-#                nget = nget + 1
-#                if link.consistency : nc = nc + 1
-#           if nget >= n_min and nget <= n_max : 
-#             #print '{:4} {:3} {:4.2f} {:3.2f} {:3.2f} {:3} {:3.2f} {:3}'.format(nget, nc, score0, score1, score2, score3, float(nc)/nget, ncons)
-#             print '{:4} {:3} {:4.2f} {:3.2f} {:3} {:3.2f} {:3}'.format(nget, nc, score0, score2, score3, float(nc)/nget, ncons)
-#
-#
-#sys.exit()
-#
+

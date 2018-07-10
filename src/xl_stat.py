@@ -182,13 +182,17 @@ def getdmax(linktype_file,link) :
 # Print link in the topolink format
 #
 
-def write(link) :
+def write(link,tol=None) :
+
+  if tol == None : tol = 0.
+
   data = link.name.split("-")
   res1_name = threeletter(data[0][0])
   res2_name = threeletter(data[1][0])
   res1_index = int(data[0][1:])
   res2_index = int(data[1][1:])
-  print '{} {:3} {} {:3} {} {:3.2f} {:3.2f}'.format(res1_name,res1_index,res2_name,res2_index,link.consistency,link.dtop,link.dmax)
+  consistency = setconsistency(link,tol=tol)
+  print '{} {:3} {} {:3} {} {:3.2f} {:3.2f}'.format(res1_name,res1_index,res2_name,res2_index,consistency,link.dtop,link.dmax)
 
 #
 # Set consistency, given a tolerance
@@ -456,20 +460,89 @@ def filter(links,scores,filter_type) :
   if filter_type == 'or' :
     for link in links :
       select = False
+      iscore=-1
       for score in scores :
-        if link.getscore(score) >= scores[score] :
+        iscore=iscore+1
+        if link.getscore(scores[iscore][0]) >= scores[iscore][1] :
           select = True
       if select : filtered.append(link)
 
   if filter_type == 'and' :
     for link in links :
       select = True
+      iscore=-1
       for score in scores :
-        if link.getscore(score) <= scores[score] :
+        iscore=iscore+1
+        if link.getscore(scores[iscore][0]) <= scores[iscore][1] :
           select = False
       if select : filtered.append(link)
 
   return filtered
+
+#
+# Function to map all possible filter options
+#
+
+def search_filters(links,scores=None,filter_type=None,nfilter=None,tol=None) :
+  
+  import numpy as np
+  from sys import exit
+
+  if scores == None : 
+    print 'ERROR: The scores search list must be set. '
+    exit()
+
+  for score in scores :
+    if links[0].getscore(score[0]) == None :
+      print 'ERROR: Some score incorrectly set in score list. '
+      exit()
+
+  if filter_type == None :  
+    print "ERROR: Please set filter_type to 'or' or 'and'"
+    exit()
+  
+  if nfilter == None :  
+    nfilter = [0,-1] 
+
+  if tol == None :  
+    tol = 0.
+
+  step = [ np.arange(scores[i][1],scores[i][2]+scores[i][3],scores[i][3]) \
+          for i in range(0,len(scores)) ]
+
+  print '# N(selected)  N(consistent) f(correct) '+\
+        '{} {} {} {}'.format(scores[0][0],scores[1][0],scores[2][0],scores[3][0])
+
+  for s0 in step[0] : 
+    for s1 in step[1] :
+      for s2 in step[2] :
+        for s3 in step[3] :
+
+          nselected = 0
+          nc = 0
+          for link in links :
+
+            if filter_type == 'or' :
+              if link.getscore(scores[0][0]) >= s0 or \
+                 link.getscore(scores[1][0]) >= s1 or \
+                 link.getscore(scores[2][0]) >= s2 or \
+                 link.getscore(scores[3][0]) >= s3 :
+                nselected = nselected + 1
+                if setconsistency(link,tol=tol) :
+                  nc = nc + 1
+            if filter_type == 'and' :
+              if link.getscore(scores[0][0]) >= s0 and \
+                 link.getscore(scores[1][0]) >= s1 and \
+                 link.getscore(scores[2][0]) >= s2 and \
+                 link.getscore(scores[3][0]) >= s3 :
+                nselected = nselected + 1
+                if setconsistency(link,tol=tol) :
+                  nc = nc + 1
+  
+          if nselected >= nfilter[0] and \
+             ( nselected <= nfilter[1] or nfilter[1] < 0 ) :
+            print '{:^13}{:^16}{:^10.2f}{:^16.2f}{:^16.2f}{:^15}{:^20}'\
+                  .format(nselected,nc,float(nc)/nselected, s0, s1, s2, s3)
 
 #
 # Convert one letter and three-letter amino acid codes
@@ -488,7 +561,6 @@ def threeletter(x):
         'G':'GLY', 'H':'HIS', 'L':'LEU', 'R':'ARG', 'W':'TRP', 
         'A':'ALA', 'V':'VAL', 'E':'GLU', 'Y':'TYR', 'M':'MET' }
   return d[x]
-
 
 
 
