@@ -165,16 +165,17 @@ def getdmax(linktype_file,link) :
 
   linktype_file = open(linktype_file)
   for line in linktype_file :
-    if "linktype" in line : 
-      data = line.split()
-      residue1_name = oneletter(data[1])
-      residue2_name = oneletter(data[5])
-      dmax = float(data[9])
-      name = link.name.split('-')
-      if ( name[0][0] == residue1_name and name[1][0] == residue2_name ) or \
-         ( name[0][0] == residue2_name and name[1][0] == residue1_name ) : 
-        linktype_file.close()
-        return dmax
+    if not comment(line) :
+      if "linktype" in line : 
+        data = line.split()
+        residue1_name = oneletter(data[1])
+        residue2_name = oneletter(data[5])
+        dmax = float(data[9])
+        name = link.name.split('-')
+        if ( name[0][0] == residue1_name and name[1][0] == residue2_name ) or \
+           ( name[0][0] == residue2_name and name[1][0] == residue1_name ) : 
+          linktype_file.close()
+          return dmax
   linktype_file.close()
   return -1.
 
