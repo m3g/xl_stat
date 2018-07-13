@@ -78,6 +78,7 @@ class Link :
     self.mplush = [ 0. for i in range(0,self.nscans) ]
     self.iscan = [ 0 for i in range(0,self.nscans) ]
     self.xic = [ 0. for i in range(0,self.nscans) ]
+    self.logxic = [ -100. for i in range(0,self.nscans) ]
 
   def init_index(self) :
     self.str = self.name.split('-')
@@ -91,6 +92,9 @@ class Link :
     return False
 
   def set_scores(self) :
+
+    from numpy import log10
+
     unique = [self.mplush[0]]
     for i in range(1,self.nscans) :
       if not self.mplush_repeat(self.mplush[i],unique) :
@@ -106,22 +110,24 @@ class Link :
 
     # The xic score considers only scans for which proper xic data 
     # was reported (that is, that was not set to -1.00)
-    self.maxxic = max(self.xic)
-    self.avgxic = 0.
+
+    self.hasxic = False
+
     self.sumxic = 0.
+    self.sumlogxic = 0.
     nxic = 0
     for xic in self.xic :
       if xic >= 0. :  
+        self.hasxic = True
         nxic = nxic + 1
         self.sumxic = self.sumxic + xic
-    if nxic > 0 : 
-      self.avgxic = self.sumxic / float(nxic)
-    else :
-      self.sumxic = -1.00
-      self.avgxic = -1.00
+        self.sumlogxic = self.sumlogxic + log10(xic)
 
-    self.avgxic = sum(self.xic)/len(self.xic)
-    self.sumxic = sum(self.xic)
+    if self.hasxic : 
+      self.avgxic = self.sumxic / float(nxic)
+      self.avglogxic = self.sumlogxic / float(nxic)
+      self.maxxic = max(self.xic)
+      self.maxlogxic = log10(self.maxxic)
 
   def getscore(self,score) :
     if score == 'Consistency' : return self.consistency
@@ -136,6 +142,9 @@ class Link :
     if score == 'Average XIC' : return self.avgxic
     if score == 'Sum of XIC' : return self.sumxic
     if score == 'Maximum XIC' : return self.sumxic
+    if score == 'Average log(XIC)' : return self.avglogxic
+    if score == 'Sum of log(XIC)' : return self.sumlogxic
+    if score == 'Maximum log(XIC)' : return self.maxlogxic
     return None
 
 
@@ -169,18 +178,18 @@ def in_domain(name,domain) :
 
 def readxic(xic_file_name,link) :
 
-  from numpy import zeros, log10
+  from numpy import zeros
 
   xic_file = open(xic_file_name)
   xic = zeros(link.nscans,dtype=float)
-  xic = xic - 1.0
+  xic = xic - 1. # xic=-1. means that no xic was reported
 
   iread = -1
   for line in xic_file :
     data = line.split()
     if iread != -1 :
-      xic[iread] = data[len(data)-1]
-      if xic[iread] > 0. : xic[iread] = log10(xic[iread])
+      xic_read = float(data[len(data)-1])
+      if xic_read > 0. : xic[iread] = xic_read
       iread = -1
       continue
     for i in range(0,link.nscans) :
@@ -394,6 +403,8 @@ def remove(links,name) :
     if link.name == name : 
       del links[i]
       return links
+  print ' Error in remove function : link ', link.name, ' not found in link list. ' 
+  exit()
 
 #
 # Check if a line is commented

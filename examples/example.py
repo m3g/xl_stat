@@ -48,38 +48,41 @@ nlinks, links = xl_stat.read_all(xml_file=xml_file,\
 
 scores = [ 'Average Score1', 'Average Score2', 
            'Number of Scans', 'Number of Species', \
-           'Sum of XIC', 'Maximum XIC' ]
+           'Sum of log(XIC)', 'Maximum log(XIC)' ]
 
 #
 # Remove one of the links from the list, if you want
 #
 #links = xl_stat.remove(links,'S133-K99')
 
-print ' Total number of links: ', len(links)
+#
+# Filter the links to get only those with xic data
+#
+
+tol=0.
 nc = 0
 for link in links :
-  if xl_stat.setconsistency(link,tol=5.) : nc = nc + 1
+  if xl_stat.setconsistency(link,tol=tol) : nc = nc + 1
 print ' Total number of links: ', len(links), ' nc = ', nc
 
-xiclinks = links
-for link in links :
-  if link.getscore('Maximum XIC') < 0. :
-    xiclinks = xl_stat.remove(xiclinks,link.name)
-links = xiclinks
+nlinks = len(links)-1
+for ilink in range(nlinks,0,-1) :
+  if not links[ilink].hasxic :
+    links = xl_stat.remove(links,links[ilink].name)
 
 nc = 0
 for link in links :
-  if xl_stat.setconsistency(link,tol=5.) : nc = nc + 1
+  if xl_stat.setconsistency(link,tol=tol) : nc = nc + 1
 print ' Number of links with XIC data: ', len(links), ' nc = ', nc
 
 #
 # Plot one score as a function of the other, for a given tolerance relative to dmax
 #
-x, y = xl_stat.setplot(links,x='Average Score1',y='Sum of XIC',tol=5.)
-plt.plot(x,y,'o')
+#x, y = xl_stat.setplot(links,x='Average Score1',y='Sum of XIC',tol=5.)
+#plt.plot(x,y,'o')
 #plt.xlim(-0.5,1.5) # Uncomment if x is consistency for a nice plot
-plt.show()
-sys.exit()
+#plt.show()
+#sys.exit()
 
 #
 # Plot the point-biserial correlation as function of the tolerance, for one score
