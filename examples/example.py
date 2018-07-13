@@ -48,21 +48,38 @@ nlinks, links = xl_stat.read_all(xml_file=xml_file,\
 
 scores = [ 'Average Score1', 'Average Score2', 
            'Number of Scans', 'Number of Species', \
-           'Average XIC', 'Sum of XIC' ]
+           'Sum of XIC', 'Maximum XIC' ]
 
 #
 # Remove one of the links from the list, if you want
 #
 #links = xl_stat.remove(links,'S133-K99')
 
+print ' Total number of links: ', len(links)
+nc = 0
+for link in links :
+  if xl_stat.setconsistency(link,tol=5.) : nc = nc + 1
+print ' Total number of links: ', len(links), ' nc = ', nc
+
+xiclinks = links
+for link in links :
+  if link.getscore('Maximum XIC') < 0. :
+    xiclinks = xl_stat.remove(xiclinks,link.name)
+links = xiclinks
+
+nc = 0
+for link in links :
+  if xl_stat.setconsistency(link,tol=5.) : nc = nc + 1
+print ' Number of links with XIC data: ', len(links), ' nc = ', nc
+
 #
 # Plot one score as a function of the other, for a given tolerance relative to dmax
 #
-#x, y = xl_stat.setplot(links,x='Consistency',y='Sum of XIC',tol=5.)
-#plt.plot(x,y,'o')
+x, y = xl_stat.setplot(links,x='Average Score1',y='Sum of XIC',tol=5.)
+plt.plot(x,y,'o')
 #plt.xlim(-0.5,1.5) # Uncomment if x is consistency for a nice plot
-#plt.show()
-#sys.exit()
+plt.show()
+sys.exit()
 
 #
 # Plot the point-biserial correlation as function of the tolerance, for one score
@@ -96,7 +113,7 @@ plt.subplots_adjust(left=0.14,
                     wspace=0.4, 
                     hspace=0.6)
 plt.gcf().set_size_inches(6,8)
-plt.savefig(plot_dir+'/'+protein_name+'_pbs_correlations.pdf')
+plt.savefig(plot_dir+'/'+protein_name+'_pbs_correlations.png')
 plt.close()
 
 #
@@ -125,10 +142,10 @@ plt.subplots_adjust(left=0.14,
                     wspace=0.4, 
                     hspace=0.6)
 plt.gcf().set_size_inches(6,8)
-plt.savefig(plot_dir+'/'+protein_name+'_scores_consistency.pdf')
+plt.savefig(plot_dir+'/'+protein_name+'_scores_consistency.png')
 plt.close()
 
-Write = True
+Write = False
 if Write : 
   #
   # Output the result of using a set of parameters to filter links

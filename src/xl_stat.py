@@ -103,6 +103,23 @@ class Link :
     self.maxscore2 = max(self.score2)
     self.sumscore1 = sum(self.score1)
     self.sumscore2 = sum(self.score2)
+
+    # The xic score considers only scans for which proper xic data 
+    # was reported (that is, that was not set to -1.00)
+    self.maxxic = max(self.xic)
+    self.avgxic = 0.
+    self.sumxic = 0.
+    nxic = 0
+    for xic in self.xic :
+      if xic >= 0. :  
+        nxic = nxic + 1
+        self.sumxic = self.sumxic + xic
+    if nxic > 0 : 
+      self.avgxic = self.sumxic / float(nxic)
+    else :
+      self.sumxic = -1.00
+      self.avgxic = -1.00
+
     self.avgxic = sum(self.xic)/len(self.xic)
     self.sumxic = sum(self.xic)
 
@@ -118,6 +135,7 @@ class Link :
     if score == 'Number of Species' : return self.nspecies 
     if score == 'Average XIC' : return self.avgxic
     if score == 'Sum of XIC' : return self.sumxic
+    if score == 'Maximum XIC' : return self.sumxic
     return None
 
 
@@ -151,16 +169,18 @@ def in_domain(name,domain) :
 
 def readxic(xic_file_name,link) :
 
-  from numpy import zeros
+  from numpy import zeros, log10
 
   xic_file = open(xic_file_name)
   xic = zeros(link.nscans,dtype=float)
+  xic = xic - 1.0
 
   iread = -1
   for line in xic_file :
     data = line.split()
     if iread != -1 :
       xic[iread] = data[len(data)-1]
+      if xic[iread] > 0. : xic[iread] = log10(xic[iread])
       iread = -1
       continue
     for i in range(0,link.nscans) :
