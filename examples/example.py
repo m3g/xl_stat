@@ -20,6 +20,7 @@ protein_name='SalbIII'
 xml_file = 'salbiii_hitsDetail.dat'
 topolink_log = 'salbiii_topolink.log'
 domain = [2,134]
+xic_file_name='salbiii_xic.dat'
 
 #protein_name='ALB'
 #xml_file = 'alb_hitsDetail.dat'
@@ -27,6 +28,7 @@ domain = [2,134]
 #domain = [1,201] ; protein_name=protein_name+'-D1'
 #domain = [202,390] ; protein_name=protein_name+'-D2' 
 #domain = [391,584] ; protein_name=protein_name+'-D3' 
+#xic_file_name=None
 
 # topolink input file containing the linktype definitions:
 
@@ -39,13 +41,14 @@ topolink_input = "topolink.inp"
 nlinks, links = xl_stat.read_all(xml_file=xml_file,\
                                  topolink_log=topolink_log,\
                                  topolink_input=topolink_input,\
+                                 xic_file_name=xic_file_name,\
                                  domain=domain)
 
 # indicators available: 
 
 scores = [ 'Average Score1', 'Average Score2', 
            'Number of Scans', 'Number of Species', \
-           'Maximum Score1', 'Maximum Score2' ]
+           'Average XIC', 'Sum of XIC' ]
 
 #
 # Remove one of the links from the list, if you want
@@ -55,7 +58,7 @@ scores = [ 'Average Score1', 'Average Score2',
 #
 # Plot one score as a function of the other, for a given tolerance relative to dmax
 #
-#x, y = xl_stat.setplot(links,x='Consistency',y='Number of Scans',tol=5.)
+#x, y = xl_stat.setplot(links,x='Consistency',y='Sum of XIC',tol=5.)
 #plt.plot(x,y,'o')
 #plt.xlim(-0.5,1.5) # Uncomment if x is consistency for a nice plot
 #plt.show()
