@@ -588,38 +588,41 @@ def search_filters(links,scores=None,filter_type=None,nfilter=None,tol=None) :
           for i in range(0,len(scores)) ]
 
   print '# N(selected)  N(consistent) f(correct) '+\
-        '{} {} {} {}'.format(scores[0][0],scores[1][0],scores[2][0],scores[3][0])
+        '{} {} {} {} {}'.format(scores[0][0],scores[1][0],scores[2][0],scores[3][0],scores[4][0])
 
   for s0 in step[0] : 
     for s1 in step[1] :
       for s2 in step[2] :
         for s3 in step[3] :
+          for s4 in step[4] :
 
-          nselected = 0
-          nc = 0
-          for link in links :
+            nselected = 0
+            nc = 0
+            for link in links :
 
-            if filter_type == 'or' :
-              if link.getscore(scores[0][0]) >= s0 or \
-                 link.getscore(scores[1][0]) >= s1 or \
-                 link.getscore(scores[2][0]) >= s2 or \
-                 link.getscore(scores[3][0]) >= s3 :
-                nselected = nselected + 1
-                if setconsistency(link,tol=tol) :
-                  nc = nc + 1
-            if filter_type == 'and' :
-              if link.getscore(scores[0][0]) >= s0 and \
-                 link.getscore(scores[1][0]) >= s1 and \
-                 link.getscore(scores[2][0]) >= s2 and \
-                 link.getscore(scores[3][0]) >= s3 :
-                nselected = nselected + 1
-                if setconsistency(link,tol=tol) :
-                  nc = nc + 1
+              if filter_type == 'or' :
+                if link.getscore(scores[0][0]) >= s0 or \
+                   link.getscore(scores[1][0]) >= s1 or \
+                   link.getscore(scores[2][0]) >= s2 or \
+                   link.getscore(scores[3][0]) >= s3 or \
+                   link.getscore(scores[4][0]) >= s4 :
+                  nselected = nselected + 1
+                  if setconsistency(link,tol=tol) :
+                    nc = nc + 1
+              if filter_type == 'and' :
+                if link.getscore(scores[0][0]) >= s0 and \
+                   link.getscore(scores[1][0]) >= s1 and \
+                   link.getscore(scores[2][0]) >= s2 and \
+                   link.getscore(scores[3][0]) >= s3 and \
+                   link.getscore(scores[4][0]) >= s4 :
+                  nselected = nselected + 1
+                  if setconsistency(link,tol=tol) :
+                    nc = nc + 1
   
-          if nselected >= nfilter[0] and \
-             ( nselected <= nfilter[1] or nfilter[1] < 0 ) :
-            print '{:^13}{:^16}{:^10.2f}{:^16.2f}{:^16.2f}{:^15}{:^20}'\
-                  .format(nselected,nc,float(nc)/nselected, s0, s1, s2, s3)
+            if nselected >= nfilter[0] and \
+               ( nselected <= nfilter[1] or nfilter[1] < 0 ) :
+              print '{:^13}{:^16}{:^10.2f}{:^16.2f}{:^16.2f}{:^15}{:^20}{:^16.2f}'\
+                    .format(nselected,nc,float(nc)/nselected, s0, s1, s2, s3, s4)
 
 #
 # Convert one letter and three-letter amino acid codes

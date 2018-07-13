@@ -59,7 +59,7 @@ scores = [ 'Average Score1', 'Average Score2',
 # Filter the links to get only those with xic data
 #
 
-tol=0.
+tol=5.
 nc = 0
 for link in links :
   if xl_stat.setconsistency(link,tol=tol) : nc = nc + 1
@@ -78,9 +78,9 @@ print ' Number of links with XIC data: ', len(links), ' nc = ', nc
 #
 # Plot one score as a function of the other, for a given tolerance relative to dmax
 #
-#x, y = xl_stat.setplot(links,x='Average Score1',y='Sum of XIC',tol=5.)
+#x, y = xl_stat.setplot(links,x='Average Score1',y='Sum of log(XIC)',tol=5.)
 #plt.plot(x,y,'o')
-#plt.xlim(-0.5,1.5) # Uncomment if x is consistency for a nice plot
+##plt.xlim(-0.5,1.5) # Uncomment if x is consistency for a nice plot
 #plt.show()
 #sys.exit()
 
@@ -185,10 +185,11 @@ if Search :
   
   # the scores list contains the range of scores to be search, with steps
                # Name                 min    max  step
-  scores = [ [ 'Average Score1'   ,    0.,  4.00,  0.5 ] , \
-             [ 'Average Score2'   ,    0.,  4.00,  0.5 ] , \
-             [ 'Number of Species',    1,     20,    1 ] , \
-             [ 'Number of Scans'  ,    1,     20,    1 ] ]
+  scores = [ [ 'Average Score1'   ,   0.,  4.00,  0.5 ] , \
+             [ 'Average Score2'   ,   0.,    1.,  0.5 ] , \
+             [ 'Number of Species',    0,     1,    1 ] , \
+             [ 'Number of Scans'  ,    0,     1,    1 ] , \
+             [ 'Sum of log(XIC)'  ,   0.,    60,   5. ] ]
   
   # Range of filtered selection sizes to be considered (here about 20% of domains size)
   
@@ -196,6 +197,7 @@ if Search :
   n_min = int((n-0.05*n)*(2./10.))  # 5% less than 20% of domain size
   n_max = int((n+0.05*n)*(2./10.))  # 5% more than 20% of domain size
   nfilter = [ n_min, n_max ]
+  nfilter = [ 1, n ]
   tol=5.
   filter_type='and'
    
