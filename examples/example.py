@@ -197,7 +197,6 @@ if Search :
   n_min = int((n-0.05*n)*(2./10.))  # 5% less than 20% of domain size
   n_max = int((n+0.05*n)*(2./10.))  # 5% more than 20% of domain size
   nfilter = [ n_min, n_max ]
-  nfilter = [ 1, n ]
   tol=5.
   filter_type='and'
    
