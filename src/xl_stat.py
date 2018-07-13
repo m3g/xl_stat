@@ -527,6 +527,20 @@ def pbs_vs_tol(links,score,tol=None) :
   return x, pbs
 
 #
+# Function that leaves the link list with only the links that
+# have xic data
+#
+
+def xic_only(links) :
+
+  nlinks = len(links)-1
+  for ilink in range(nlinks,0,-1) :
+    if not links[ilink].hasxic :
+      links = remove(links,links[ilink].name)
+  return links
+
+
+#
 # Filter links according to spectral parameters
 #
 

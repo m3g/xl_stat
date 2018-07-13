@@ -65,10 +65,7 @@ for link in links :
   if xl_stat.setconsistency(link,tol=tol) : nc = nc + 1
 print ' Total number of links: ', len(links), ' nc = ', nc
 
-nlinks = len(links)-1
-for ilink in range(nlinks,0,-1) :
-  if not links[ilink].hasxic :
-    links = xl_stat.remove(links,links[ilink].name)
+links = xl_stat.xic_only(links)
 
 nc = 0
 for link in links :
