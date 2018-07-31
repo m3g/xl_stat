@@ -538,12 +538,12 @@ def pbs_vs_tol(links,score,tol=None) :
 
 def xic_only(links) :
 
-  nlinks = len(links)-1
-  for ilink in range(nlinks,0,-1) :
+  ilinks = len(links)-1
+  for ilink in range(ilinks,-1,-1) :
+    print ilink
     if not links[ilink].hasxic :
       links = remove(links,links[ilink].name)
   return links
-
 
 #
 # Filter links according to spectral parameters

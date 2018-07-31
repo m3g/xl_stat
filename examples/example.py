@@ -60,18 +60,23 @@ scores = [ 'Average Score1', 'Average Score2',
 # Filter the links to get only those with xic data
 #
 
-tol=5.
-nc = 0
-for link in links :
-  if xl_stat.setconsistency(link,tol=tol) : nc = nc + 1
-print ' Total number of links: ', len(links), ' nc = ', nc
-
-links = xl_stat.xic_only(links)
-
-nc = 0
-for link in links :
-  if xl_stat.setconsistency(link,tol=tol) : nc = nc + 1
-print ' Number of links with XIC data: ', len(links), ' nc = ', nc
+xic = True
+if xic :
+  tol=5.
+  nc = 0
+  for link in links :
+    if xl_stat.setconsistency(link,tol=tol) : nc = nc + 1
+  print ' Total number of links: ', len(links), ' nc = ', nc
+  
+  links = xl_stat.xic_only(links)
+  
+  nc = 0
+  for link in links :
+    if xl_stat.setconsistency(link,tol=tol) : nc = nc + 1
+  print ' Number of links with XIC data: ', len(links), ' nc = ', nc
+  if len(links) == 0 : 
+    print ' Exiting because there are no links left in the list. '
+    sys.exit()
 
 
 #
