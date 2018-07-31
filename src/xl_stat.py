@@ -117,7 +117,7 @@ class Link :
     self.sumlogxic = 0.
     nxic = 0
     for xic in self.xic :
-      if xic >= 0. :  
+      if xic > 0. :  
         self.hasxic = True
         nxic = nxic + 1
         self.sumxic = self.sumxic + xic
@@ -128,6 +128,11 @@ class Link :
       self.avglogxic = self.sumlogxic / float(nxic)
       self.maxxic = max(self.xic)
       self.maxlogxic = log10(self.maxxic)
+    else :
+      self.maxxic = 0.
+      self.avgxic = 0.
+      self.avglogxic = 0.
+      self.maxlogxic = 0.
 
   def getscore(self,score) :
     if score == 'Consistency' : return self.consistency

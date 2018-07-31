@@ -20,7 +20,8 @@ protein_name='SalbIII'
 xml_file = 'salbiii_hitsDetail.dat'
 topolink_log = 'salbiii_topolink.log'
 domain = [2,134]
-xic_file_name='salbiii_xic.dat'
+xic_file_name=None
+#xic_file_name='salbiii_xic.dat'
 
 #protein_name='ALB'
 #xml_file = 'alb_hitsDetail.dat'
@@ -71,6 +72,7 @@ nc = 0
 for link in links :
   if xl_stat.setconsistency(link,tol=tol) : nc = nc + 1
 print ' Number of links with XIC data: ', len(links), ' nc = ', nc
+
 
 #
 # Plot one score as a function of the other, for a given tolerance relative to dmax
